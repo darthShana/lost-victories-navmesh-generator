@@ -6,8 +6,8 @@ import com.jme3.app.state.BaseAppState;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.PhysicsSpace;
 import com.jme3.bullet.collision.shapes.CollisionShape;
-import com.jme3.bullet.collision.shapes.HeightfieldCollisionShape;
 import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.light.AmbientLight;
 import com.jme3.light.DirectionalLight;
 import com.jme3.math.*;
@@ -57,6 +57,8 @@ public class MyTerrainState extends BaseAppState{
 
     private void initFloor() {
         final Node loadModel = (Node) getApplication().getAssetManager().loadModel("Scenes/testScene4.j3o");
+        CollisionShape sceneShape = CollisionShapeFactory.createMeshShape(loadModel);
+
         final TerrainQuad terrain = (com.jme3.terrain.geomipmap.TerrainQuad) loadModel.getChild("terrain-testScene4");
         terrain.removeFromParent();
         loadedMap.attachChild(terrain);
@@ -65,7 +67,6 @@ public class MyTerrainState extends BaseAppState{
             loadedMap.attachChild(child);
         });
 
-        CollisionShape sceneShape = new HeightfieldCollisionShape(terrain.getHeightMap(), new Vector3f(1, 1, 1));
         landscape = new RigidBodyControl(sceneShape, 0);
         loadedMap.addControl(landscape);
 
