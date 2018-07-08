@@ -40,6 +40,7 @@ import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
+import com.jme3.scene.Mesh.Mode;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.Spatial.CullHint;
@@ -238,7 +239,24 @@ public class NavMeshState extends BaseAppState {
             Spatial spatial = it.next();
 
             if (spatial instanceof Geometry) {
-                geoms.add((Geometry) spatial);
+                Mode meshMode = ((Geometry)spatial).getMesh().getMode();
+                // Must all be triangles for GeometryBatchFactory.mergeGeometries to merge
+                if (meshMode == Mode.Triangles ||
+                        meshMode == Mode.TriangleFan ||
+                        meshMode == Mode.TriangleStrip) {
+                    geoms.add((Geometry) spatial);
+                } else{
+                    if (LOG.isLoggable(Level.WARNING)) {
+                        String pathToGeom = spatial.getName();
+                        Node parent = spatial.getParent();
+                        while (parent != null) {
+                            pathToGeom = parent.getName() + "/" + pathToGeom;
+                            parent = parent.getParent();
+                        }
+                        LOG.warning("Geometry with invalid mode detected, suggest delete. " + pathToGeom);
+                    }
+                }
+
             } else if (spatial instanceof Node) {
                 if (spatial instanceof Terrain) {
                     Mesh merged = generator.terrain2mesh((Terrain) spatial);
@@ -274,6 +292,7 @@ public class NavMeshState extends BaseAppState {
     private void exportNavMesh(Geometry geom, String fileName) {
         String sep = System.getProperty("file.separator");
         Path path = Paths.get("assets" + sep + "Scenes" + sep + "NavMesh");
+        System.out.println("NavMEsh exported to: " + path + sep + fileName + ".j3o");
         BinaryExporter exporter = BinaryExporter.getInstance();
         File file = new File(path + sep + fileName + ".j3o");
         try {
